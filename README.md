@@ -154,19 +154,50 @@ git push -u origin main
 
 ### 2. Create a Cloudflare Pages Project
 
+#### Option A: GitHub Integration (recommended for automatic deploys)
+
 1. Go to [Cloudflare Dashboard → Pages](https://dash.cloudflare.com/pages)
-2. Create a new project → Connect to your GitHub repo
+2. Create a new project → Connect to your GitHub repo (`BenGurWaves/crashrating`)
 3. Configure build settings:
 
 | Setting | Value |
 |---|---|
 | Framework preset | Next.js (App Router) |
-| Build command | `npm run build` |
-| Build output directory | `.next` |
+| Build command | `npm run build && npx @cloudflare/next-on-pages` |
+| Build output directory | `.vercel/output/static` |
 | Node.js version | 20+ |
 
-4. Add all 9 environment variables from `.env.example` (both public and private).
-5. Set the custom domain to `crashrating.calyvent.com`.
+4. Add build environment variable: `NPM_CONFIG_LEGACY_PEER_DEPS=true`
+   (needed for `@cloudflare/next-on-pages` peer dependency with Next.js 16)
+5. Add all 9 environment variables from `.env.example` (both public and private) as
+   "Secrets" so they're available at runtime. `NPM_CONFIG_LEGACY_PEER_DEPS` is also
+   needed during build — set it as a secret or build env var.
+6. Set the custom domain to `crashrating.calyvent.com`.
+
+#### Option B: CLI Deploy (no GitHub integration)
+
+```bash
+npm install -D @cloudflare/next-on-pages --legacy-peer-deps
+npm run build
+NPM_CONFIG_LEGACY_PEER_DEPS=true npx @cloudflare/next-on-pages
+npx wrangler pages deploy .vercel/output/static --project-name crashrating --branch main --no-bundle
+```
+
+> **Note:** A Cloudflare API token with `pages:write`, `account:read`, and
+> `zone:DNS:edit` scopes is required for full CLI management (deploy + DNS).
+> The token used in this project has `pages:write` + `zone:read` only — sufficient
+> for deploys but not for DNS record creation.
+
+**Current status:** The project is deployed and live at
+<https://crashrating.pages.dev> (production, `--branch main`). The custom domain
+`crashrating.calyvent.com` is configured in the Pages project (status: pending).
+To activate the custom domain, create a CNAME DNS record:
+
+| Record | Type | Name | Content | Proxy | TTL |
+|---|---|---|---|---|---|
+| (auto) | CNAME | `crashrating` | `crashrating.pages.dev` | Proxied (orange cloud) | Auto |
+
+Create this record in the Cloudflare Dashboard → DNS for the `calyvent.com` zone.
 
 ### 3. Supabase Setup
 
