@@ -6,6 +6,8 @@
 import { fetchModels } from "@/lib/nhtsa";
 import type { VPRCModelForMakeYear } from "@/types/nhtsa";
 
+export const runtime = 'edge';
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const make = searchParams.get("make");

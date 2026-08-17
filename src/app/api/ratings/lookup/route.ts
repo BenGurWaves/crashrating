@@ -11,6 +11,8 @@ import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { fetchVehicleIds, fetchRatingByVehicleId } from "@/lib/nhtsa";
 import type { NHTSARatingResult, VehicleVariant } from "@/types/nhtsa";
 
+export const runtime = 'edge';
+
 const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 function buildCacheId(year: string, make: string, model: string): string {

@@ -13,6 +13,8 @@ import { DeleteComparisonButton } from "@/components/DeleteComparisonButton";
 import { RemoveWatchlistButton } from "@/components/RemoveWatchlistButton";
 import type { NHTSARatingResult } from "@/types/nhtsa";
 
+export const runtime = 'edge';
+
 export const metadata: Metadata = {
   title: "Dashboard — CrashRating",
   description:

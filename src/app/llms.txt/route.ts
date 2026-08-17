@@ -2,6 +2,9 @@
 //  CrashRating — llms.txt route handler
 //  Serves a plain-Markdown summary for LLM indexing/citations.
 // ─────────────────────────────────────────────────────────────
+
+export const runtime = 'edge';
+
 export async function GET() {
   const content = `# CrashRating — LLM Index
 
