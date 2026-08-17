@@ -130,7 +130,8 @@ export default function PricingPage() {
                 "Full 80+ field crash-test metrics",
                 "Early access to new vehicles",
               ]}
-              priceId={process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_MONTHLY ?? ""}
+              priceIdMonthly={process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_MONTHLY ?? ""}
+              priceIdAnnual={process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_YEARLY ?? ""}
               featured
             />
           </div>

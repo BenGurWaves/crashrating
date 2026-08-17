@@ -14,7 +14,8 @@ interface PricingCardProps {
   price: string;
   description: string;
   features: string[];
-  priceId?: string;
+  priceIdMonthly?: string;
+  priceIdAnnual?: string;
   featured?: boolean;
 }
 
@@ -25,13 +26,14 @@ export function PricingCard({
   price,
   description,
   features,
-  priceId,
+  priceIdMonthly,
+  priceIdAnnual,
   featured = false,
 }: PricingCardProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  const handleCheckout = async () => {
+  const handleCheckout = async (priceId: string) => {
     if (tier !== "pro" || !priceId) return;
 
     if (!user) {
@@ -91,14 +93,27 @@ export function PricingCard({
           ))}
         </ul>
 
-        {tier === "pro" && priceId && (
-          <button
-            onClick={handleCheckout}
-            disabled={loading}
-            className="w-full rounded bg-amber px-4 py-2.5 text-sm font-bold text-bg transition-colors hover:bg-amber-hover disabled:opacity-50"
-          >
-            {loading ? "Loading…" : "Subscribe with Stripe"}
-          </button>
+        {tier === "pro" && (priceIdMonthly || priceIdAnnual) && (
+          <div className="space-y-2 pt-2">
+            {priceIdMonthly && (
+              <button
+                onClick={() => handleCheckout(priceIdMonthly)}
+                disabled={loading}
+                className="w-full rounded bg-amber px-4 py-2.5 text-sm font-bold text-bg transition-colors hover:bg-amber-hover disabled:opacity-50"
+              >
+                {loading ? "Loading…" : "$4.99 / month"}
+              </button>
+            )}
+            {priceIdAnnual && (
+              <button
+                onClick={() => handleCheckout(priceIdAnnual)}
+                disabled={loading}
+                className="w-full rounded border border-amber bg-bg/50 px-4 py-2.5 text-sm font-bold text-amber transition-colors hover:bg-amber/10 disabled:opacity-50"
+              >
+                {loading ? "Loading…" : "$39 / year (save 34%)"}
+              </button>
+            )}
+          </div>
         )}
 
         {tier === "free" && (

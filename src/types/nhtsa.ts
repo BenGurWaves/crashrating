@@ -31,12 +31,13 @@ export interface VPRCVehicleModel {
 }
 
 export interface VPRCModelForMakeYear {
-  ModelId: number;
-  ModelName: string;
-  MakeId: number;
-  MakeName: string;
-  VehicleTypeId?: number;
-  VehicleTypeName?: string;
+  // NHTSA vPIC API returns snake_case for this endpoint
+  Model_ID: number;
+  Model_Name: string;
+  Make_ID: number;
+  Make_Name: string;
+  Vehicle_Type_Id?: number;
+  Vehicle_Type_Name?: string;
 }
 
 // ─── SafetyRatings API ────────────────────────────────────────

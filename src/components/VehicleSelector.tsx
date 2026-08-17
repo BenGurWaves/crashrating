@@ -174,8 +174,8 @@ export function VehicleSelector({
           <option value="">Model</option>
           {modelsLoading && <option>Loading…</option>}
           {models.map((m) => (
-            <option key={m.ModelId} value={m.ModelName}>
-              {m.ModelName}
+            <option key={m.Model_ID} value={m.Model_Name}>
+              {m.Model_Name}
             </option>
           ))}
         </select>

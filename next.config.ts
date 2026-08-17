@@ -31,16 +31,11 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // ── Redirects: strip trailing slashes ───────────────────────────
-  async redirects() {
-    return [
-      {
-        source: "/:path(.*)/",
-        destination: "/:path",
-        permanent: true,
-      },
-    ];
-  },
+  // ── Trailing slashes: strip (Next.js built-in, more reliable than
+  //    redirects() on Cloudflare Pages — the redirects() function was
+  //    being inverted by @cloudflare/next-on-pages, causing 308 redirects
+  //    that ADD slashes to API routes instead of removing them) ──
+  trailingSlash: false,
 
   reactStrictMode: true,
 };

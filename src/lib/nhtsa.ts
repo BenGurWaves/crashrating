@@ -57,10 +57,10 @@ export async function fetchModels(
   make: string,
   year: string
 ): Promise<VPRCModelForMakeYear[]> {
-  const url = `${VPIC_BASE}/GetModelsForMakeYear/make/${encodeURIComponent(make)}/year/${encodeURIComponent(year)}?format=json`;
+  const url = `${VPIC_BASE}/GetModelsForMakeYear/make/${encodeURIComponent(make)}/modelyear/${encodeURIComponent(year)}?format=json`;
   const data = await nhtsaFetch<VPRCListResult<VPRCModelForMakeYear>>(url);
   return (data.Results ?? []).sort((a, b) =>
-    (a.ModelName ?? "").localeCompare(b.ModelName ?? "")
+    (a.Model_Name ?? "").localeCompare(b.Model_Name ?? "")
   );
 }
 
