@@ -19,6 +19,11 @@ function buildCacheId(year: string, make: string, model: string): string {
   return `${year}-${make.toUpperCase()}-${model.toUpperCase()}`;
 }
 
+/** Check whether the cache query returned valid data. */
+function cached_data_ok(data: unknown, error: unknown): boolean {
+  return data != null && !error;
+}
+
 /** Build a human-readable description that distinguishes variants. */
 function buildVariantDescription(rating: NHTSARatingResult): string {
   const parts: string[] = [];
@@ -46,17 +51,30 @@ export async function GET(request: Request) {
     );
   }
 
-  const supabase = createAdminSupabaseClient();
   const cacheId = buildCacheId(year, make, model);
 
   // ── 1. Check cache ──────────────────────────────────────
-  const { data: cached, error: cacheError } = await supabase
-    .from("rating_cache")
-    .select("rating_data, last_fetched")
-    .eq("id", cacheId)
-    .maybeSingle();
+  // Wrap Supabase access so a missing/misconfigured DB falls back to a
+  // direct NHTSA fetch instead of returning a 500 error.
+  let supabase: ReturnType<typeof createAdminSupabaseClient> | null = null;
+  let cached: { rating_data: unknown; last_fetched: string } | null = null;
 
-  if (cached && !cacheError) {
+  try {
+    supabase = createAdminSupabaseClient();
+    const { data, error: cacheError } = await supabase
+      .from("rating_cache")
+      .select("rating_data, last_fetched")
+      .eq("id", cacheId)
+      .maybeSingle();
+
+    if (cached_data_ok(data, cacheError)) {
+      cached = data as { rating_data: unknown; last_fetched: string };
+    }
+  } catch {
+    // Supabase unavailable — proceed with direct NHTSA fetch
+  }
+
+  if (cached) {
     const lastFetched = new Date(cached.last_fetched).getTime();
     if (Date.now() - lastFetched < CACHE_TTL_MS) {
       const ratingData = cached.rating_data as NHTSARatingResult[];
@@ -73,16 +91,22 @@ export async function GET(request: Request) {
     const listResp = await fetchVehicleIds(year, make, model);
 
     if (listResp.Count === 0 || !listResp.Results?.length) {
-      // Cache the empty result to avoid repeated lookups
-      await supabase.from("rating_cache").upsert({
-        id: cacheId,
-        year: Number(year),
-        make: make.toUpperCase(),
-        model: model.toUpperCase(),
-        vehicle_id: 0,
-        rating_data: [],
-        last_fetched: new Date().toISOString(),
-      });
+      // Cache the empty result to avoid repeated lookups (best-effort)
+      if (supabase) {
+        try {
+          await supabase.from("rating_cache").upsert({
+            id: cacheId,
+            year: Number(year),
+            make: make.toUpperCase(),
+            model: model.toUpperCase(),
+            vehicle_id: 0,
+            rating_data: [],
+            last_fetched: new Date().toISOString(),
+          });
+        } catch {
+          /* caching is best-effort */
+        }
+      }
 
       return Response.json({
         success: true,
@@ -105,20 +129,25 @@ export async function GET(request: Request) {
       }
     }
 
-    // ── 3. Cache the results ────────────────────────────────
+    // ── 3. Cache the results ──────────────────────────────── (best-effort)
     const primaryVehicleId = Number(
       (listResp.Results[0] as Record<string, unknown>).VehicleId
     );
-
-    await supabase.from("rating_cache").upsert({
-      id: cacheId,
-      year: Number(year),
-      make: make.toUpperCase(),
-      model: model.toUpperCase(),
-      vehicle_id: primaryVehicleId,
-      rating_data: ratings,
-      last_fetched: new Date().toISOString(),
-    });
+    if (supabase) {
+      try {
+        await supabase.from("rating_cache").upsert({
+          id: cacheId,
+          year: Number(year),
+          make: make.toUpperCase(),
+          model: model.toUpperCase(),
+          vehicle_id: primaryVehicleId,
+          rating_data: ratings,
+          last_fetched: new Date().toISOString(),
+        });
+      } catch {
+        /* caching is best-effort */
+      }
+    }
 
     // Build variant list for the response
     const variants: VehicleVariant[] = ratings.map((r) => ({
