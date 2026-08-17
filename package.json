@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:cf": "next build && @cloudflare/next-on-pages",
+    "deploy": "next build && @cloudflare/next-on-pages && wrangler pages deploy .vercel/output/static --project-name crashrating --no-bundle",
     "start": "next start",
     "lint": "eslint"
   },
