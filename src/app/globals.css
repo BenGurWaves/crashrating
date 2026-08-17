@@ -1,1 +1,120 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300,400,500,600,700&family=Space+Grotesk:wght@400,500,600,700,800&display=swap');
 @import "tailwindcss";
+
+/* ────────────────────────────────────────────────────────── */
+/*  Tailwind CSS v4 — Custom theme                            */
+/*  Deep charcoal background, amber accent, gold stars.      */
+/*  No blue or purple gradients — intentional automotive      */
+/*  safety colour system.                                    */
+/* ────────────────────────────────────────────────────────── */
+
+@theme {
+  /* Neutrals */
+  --color-bg: #0a0a0a;
+  --color-bg-card: #141414;
+  --color-bg-hover: #1e1e1e;
+  --color-text: #f5f5f5;
+  --color-text-muted: #a0a0a0;
+  --color-text-dim: #666666;
+  --color-border: #2a2a2a;
+
+  /* Brand accent (automotive amber) */
+  --color-amber: #ff8c00;
+  --color-amber-hover: #e67e00;
+
+  /* Star / rating gold */
+  --color-gold: #ffd700;
+  --color-gold-dim: #b8860b;
+
+  /* Status colors */
+  --color-success: #22c55e;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+  --color-info: #38bdf8;
+
+  /* Font families */
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: "Inter", sans-serif;
+
+  /* Subtle animations */
+  --animate-fade-in: fadeIn 0.3s ease-out forwards;
+  --animate-slide-up: slideUp 0.4s ease-out forwards;
+}
+
+/* ── Keyframes ───────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(1rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Base styles ──────────────────────────────────────────── */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-size: 16px;
+  }
+
+  body {
+    @apply bg-bg text-text font-body antialiased;
+  }
+
+  /* Custom scrollbar matching the dark theme */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-bg;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-text-muted;
+  }
+
+  ::selection {
+    @apply bg-amber text-bg;
+  }
+
+  /* Smooth transitions for interactive elements */
+  button, a {
+    transition-property: background-color, border-color, color, opacity;
+    transition-duration: 0.2s;
+  }
+}
+
+/* ── Custom utilities ─────────────────────────────────────── */
+
+/* Star rating container — flex layout for 5-star display */
+.star-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Amber ring for prominent star containers */
+.amber-ring {
+  box-shadow: 0 0 20px rgba(255, 140, 0, 0.3);
+}
+
+/* Responsive page container */
+.page-container {
+  max-width: 72rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .page-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}

@@ -1,34 +1,246 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CrashRating
+
+**Official NHTSA 5-star crash test ratings — served fast, designed to last.**
+
+CrashRating is a high-performance Next.js web application that surfaces official
+NHTSA safety ratings for 150+ popular vehicles. Users can look up ratings by
+year/make/model, compare two vehicles side-by-side, save comparisons, and
+track favorite models on a watchlist. Pro features (unlimited saves) are
+available via Stripe Checkout.
+
+## Tech Stack
+
+| Layer        | Technology                                                         |
+|--------------|-------------------------------------------------------------------|
+| Framework    | [Next.js 16.3.1](https://nextjs.org) (App Router)                |
+| UI           | React 19 · Tailwind CSS v4 · TypeScript 5                        |
+| Fonts        | Space Grotesk (display) + Inter (body) via Google Fonts          |
+| Auth         | Supabase Auth (email + password)                                  |
+| Database     | Supabase PostgreSQL (rating cache, saved comparisons, watchlist) |
+| Payments     | Stripe Checkout (server-side session creation)                   |
+| Hosting      | Cloudflare Pages + Functions                                     |
+| Rate limiting| NHTSA vPIC + SafetyRatings APIs (cached 30 days in Supabase)     |
+
+## Features
+
+- **Rating lookup** — Enter year/make/model via cascading dropdowns (powered by
+  the NHTSA vPIC API) and see the full 5-star safety rating breakdown
+  (overall, frontal, side, rollover, crash avoidance tech ratings).
+- **Side-by-side comparison** — Compare two vehicles' ratings in a
+  color-coded table. URL params pre-fill the selectors so comparisons can be
+  shared via link.
+- **Static detail pages** — 151 pre-generated SSG pages at
+  `/safety-ratings/[year]/[make]/[model]` with daily ISR revalidation for
+  top vehicles, complete with JSON-LD structured data.
+- **Watchlist** — Authenticated users can add/remove vehicles from a
+  personal watchlist.
+- **Saved comparisons** — Pro users can save up to 50 comparison snapshots.
+- **Pro tier** — Stripe Checkout for monthly or annual billing.
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── api/
+│   │   ├── checkout/          # POST — create Stripe Checkout Session
+│   │   ├── ratings/lookup/    # GET — NHTSA rating lookup w/ Supabase cache
+│   │   ├── saved-comparisons/ # GET/POST/DELETE — CRUD saved comparisons
+│   │   ├── watchlist/         # GET/POST/DELETE — CRUD watchlist items
+│   │   └── vpic/              # GET — vPIC API proxy (makes, models)
+│   ├── about/                 # Static about page
+│   ├── compare/               # Side-by-side comparison (Suspense + useSearchParams)
+│   ├── dashboard/             # Auth-required saved comps + watchlist
+│   ├── login/                 # Sign-in page
+│   ├── pricing/               # Pricing tiers + Stripe Checkout
+│   ├── safety-ratings/[y]/[m]/[model]/  # 151 SSG + ISR detail pages
+│   ├── layout.tsx             # Root layout w/ SupabaseProvider + Header + Footer
+│   ├── globals.css            # Tailwind v4 @theme + custom palette
+│   ├── robots.ts              # Allow GPTBot, ClaudeBot, PerplexityBot
+│   ├── sitemap.ts             # Auto-generated sitemap
+│   └── llms.txt/              # LLM-friendly site summary
+├── components/                # Modular React components
+├── data/top-vehicles.ts       # 151 vehicles across 18 segments
+├── lib/
+│   ├── nhtsa.ts              # NHTSA API client (server-side, 8s timeout)
+│   ├── supabase/             # client, server, admin helpers
+│   ├── stripe.ts             # Lazy Stripe client (getStripe())
+│   ├── content.ts            # Vehicle-specific generated content
+│   └── utils.ts              # slugify, formatVehicleName, etc.
+└── types/
+    ├── nhtsa.ts              # NHTSA API response types
+    └── supabase.ts           # Supabase Database interface
+```
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20+ (tested on Node 26)
+- npm 11+
+- A Supabase project (for auth + database)
+- A Stripe account (for checkout)
+- A GitHub account (for deployment)
+
+### Installation
+
+```bash
+git clone <your-fork-url> crashrating
+cd crashrating
+npm install
+```
+
+### Environment Variables
+
+Copy `.env.example` to `.env.local` and fill in real values:
+
+```bash
+cp .env.example .env.local
+```
+
+| Variable | Public/Private | Description |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Public | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public | Supabase anon key (browser-safe) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Private | Server-only; for cache writes |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Public | Stripe publishable key |
+| `STRIPE_SECRET_KEY` | Private | Stripe secret key (server-side only) |
+| `STRIPE_WEBHOOK_SECRET` | Private | Stripe webhook signing secret |
+| `NEXT_PUBLIC_SITE_URL` | Public | Canonical site URL |
+| `NEXT_PUBLIC_STRIPE_PRICE_ID_MONTHLY` | Public | Stripe monthly price ID |
+| `NEXT_PUBLIC_STRIPE_PRICE_ID_YEARLY` | Public | Stripe yearly price ID |
+
+**Security note:** All private keys (`SUPABASE_SERVICE_ROLE_KEY`,
+`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`) are read exclusively in
+server-side API routes via `process.env`. They never appear in the
+browser bundle.
+
+### Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Build
 
-## Learn More
+```bash
+npm run build
+```
 
-To learn more about Next.js, take a look at the following resources:
+The build prerenders 151 static safety-rating pages with ISR (`revalidate: 86400`).
+Each page fetches fresh data from the NHTSA API via the `/api/ratings/lookup`
+route, which caches results in Supabase for 30 days.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Lint
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run lint
+```
 
-## Deploy on Vercel
+## Deployment (Cloudflare Pages)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 1. Push to GitHub
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+git init
+git add -A
+git commit -m "Initial build"
+git branch -M main
+git remote add origin git@github.com:<your-username>/crashrating.git
+git push -u origin main
+```
+
+### 2. Create a Cloudflare Pages Project
+
+1. Go to [Cloudflare Dashboard → Pages](https://dash.cloudflare.com/pages)
+2. Create a new project → Connect to your GitHub repo
+3. Configure build settings:
+
+| Setting | Value |
+|---|---|
+| Framework preset | Next.js (App Router) |
+| Build command | `npm run build` |
+| Build output directory | `.next` |
+| Node.js version | 20+ |
+
+4. Add all 9 environment variables from `.env.example` (both public and private).
+5. Set the custom domain to `crashrating.calyvent.com`.
+
+### 3. Supabase Setup
+
+Run the following SQL in your Supabase SQL Editor to create the required tables:
+
+```sql
+-- Rating cache (NHTSA data, 30-day TTL)
+create table rating_cache (
+  id text primary key,
+  year integer,
+  make text,
+  model text,
+  vehicle_id integer,
+  rating_data jsonb,
+  last_fetched timestamptz default now()
+);
+
+-- Saved comparisons
+create table saved_comparisons (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users not null,
+  vehicle_a jsonb,
+  vehicle_b jsonb,
+  created_at timestamptz default now()
+);
+
+-- Watchlist
+create table watchlist (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users not null,
+  year integer,
+  make text,
+  model text,
+  created_at timestamptz default now(),
+  unique (user_id, year, make, model)
+);
+
+-- Enable RLS
+alter table saved_comparisons enable row level security;
+alter table watchlist enable row level security;
+
+create policy "Users can CRUD own saved_comparisons"
+  on saved_comparisons for all using (auth.uid() = user_id);
+
+create policy "Users can CRUD own watchlist"
+  on watchlist for all using (auth.uid() = user_id);
+```
+
+### 4. Stripe Setup
+
+1. Create a product in the Stripe Dashboard
+2. Add monthly and yearly price IDs
+3. Set up a webhook endpoint for `checkout.session.completed` events
+4. Add the webhook signing secret as `STRIPE_WEBHOOK_SECRET` in Cloudflare Pages
+
+## SEO & AI Discoverability
+
+- **`robots.txt`** — Allows Google, GPTBot, ClaudeBot, PerplexityBot
+- **`sitemap.xml`** — Auto-generated, includes all static routes
+- **`llms.txt`** — Plain-text site summary for LLM scraping
+- **JSON-LD** — Article + FAQPage schema on safety-rating pages,
+  Organization + FAQPage on the homepage
+- **OpenGraph + Twitter Cards** — Meta tags on every route
+- **Favicon set** — `favicon.ico`, 16/32/192/512px PNGs, Apple touch icon
+- **`og-image.png`** — 1200×630 OpenGraph image
+
+## Design System
+
+- **Display font:** Space Grotesk (bold headlines, high contrast)
+- **Body font:** Inter (clean, legible UI)
+- **Color palette:** Deep charcoal (#0a0a0a) background, amber (#f59e0b)
+  accent, gold (#d4af37) star ratings — inspired by automotive safety
+  color coding (amber caution, gold excellence). No blue/purple gradients.
+
+## License
+
+Proprietary — all rights reserved.

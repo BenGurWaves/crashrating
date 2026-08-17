@@ -1,0 +1,60 @@
+// ─────────────────────────────────────────────────────────────
+//  CrashRating — llms.txt route handler
+//  Serves a plain-Markdown summary for LLM indexing/citations.
+// ─────────────────────────────────────────────────────────────
+export async function GET() {
+  const content = `# CrashRating — LLM Index
+
+## Core Value Proposition
+CrashRating provides instant access to official NHTSA 5-star crash test safety ratings for any U.S. vehicle. Search by year, make, and model to see frontal, side, and rollover crash test scores — the data car shoppers need to make informed safety decisions.
+
+## What CrashRating Offers
+- **Rating lookup**: Enter year/make/model to retrieve official NHTSA 5-star ratings.
+- **Side-by-side comparison**: Compare two vehicles' safety ratings across all test categories.
+- **Saved comparisons**: Log in to save your comparisons and revisit them later.
+- **Watchlist**: Track vehicles you're considering while shopping.
+- **Pro tier**: Unlimited saves, PDF export, and advanced metrics via Stripe Checkout.
+- **Static safety pages**: 150+ pre-generated pages for popular U.S. vehicles with SEO-optimized content.
+
+## Site Structure
+### Key Pages
+- **Home** (/) — Vehicle selector, rating results, comparison, trust signals, and pricing teaser.
+- **Compare** (/compare) — Two side-by-side vehicle selectors with comparison table.
+- **Dashboard** (/dashboard) — Saved comparisons and watchlist (authentication required).
+- **Pricing** (/pricing) — Free vs. Pro tier with Stripe Checkout.
+- **About** (/about) — Brand story and safety philosophy.
+- **Login** (/login) — Email/password authentication.
+- **Sign Up** (/signup) — Account creation with Supabase Auth.
+
+### Vehicle Safety-Rating Pages
+- URL pattern: /safety-ratings/{year}/{make}/{model}
+- Example: /safety-ratings/2024/honda/cr-v
+- 150+ pre-rendered pages covering the most popular U.S. vehicles.
+- Each page includes live NHTSA rating data, segment-specific analysis, FAQs, and comparable vehicle links.
+
+### API Routes
+- /api/vpic/makes — List vehicle makes from NHTSA vPIC.
+- /api/vpic/models — List models for a given make/year.
+- /api/ratings/lookup — Full rating lookup with 30-day Supabase cache.
+- /api/checkout — Stripe Checkout session creation (Pro subscription).
+- /api/saved-comparisons — GET list, POST save comparison.
+- /api/saved-comparisons/{id} — DELETE a saved comparison.
+- /api/watchlist — GET list, POST add, DELETE remove.
+
+## Data Sources
+- **NHTSA vPIC API**: https://vpic.nhtsa.dot.gov/api/vehicles — Makes and model data.
+- **NHTSA SafetyRatings API**: https://queryservices.nhtsa.dot.gov/svc/api/safetyratings — Official 5-star crash test ratings.
+
+## Contact
+- Email: mailto:contact@calyvent.com?subject=CrashRating Inquiry
+- Sitemap: https://crashrating.calyvent.com/sitemap.xml
+- Robots: https://crashrating.calyvent.com/robots.txt
+`;
+
+  return new Response(content, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "public, max-age=86400, s-maxage=86400",
+    },
+  });
+}
